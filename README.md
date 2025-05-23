@@ -2,7 +2,7 @@
 
 ## Introducción
 
-Este proyecto consiste en el desarrollo de un microservicio REST API para Habi. El propósito principal de esta API es permitir a los usuarios externos consultar los inmuebles disponibles para la venta almacenados en la base de datos[cite: 5]. Los usuarios podrán ver tanto inmuebles vendidos como disponibles[cite: 2], y aplicar diversos filtros para refinar sus búsquedas, como año de construcción, ciudad y estado del inmueble[cite: 3, 11]. Adicionalmente, aunque no se implementará en este primer microservicio, se contempla la funcionalidad de "me gusta" para los inmuebles[cite: 4].
+Este proyecto consiste en el desarrollo de un microservicio REST API para Habi. El propósito principal de esta API es permitir a los usuarios externos consultar los inmuebles disponibles para la venta almacenados en la base de datos. Los usuarios podrán ver tanto inmuebles vendidos como disponibles, y aplicar diversos filtros para refinar sus búsquedas, como año de construcción, ciudad y estado del inmueble. Adicionalmente, aunque no se implementará en este primer microservicio, se contempla la funcionalidad de "me gusta" para los inmuebles.
 
 Este primer microservicio se enfocará en la **consulta de inmuebles**.
 
@@ -13,9 +13,9 @@ Para el desarrollo de este microservicio, se emplearán las siguientes tecnolog�
 * **Lenguaje de Programación:** Python 3.13.3
 * **Base de Datos:** MySQL. La interacción se realizará mediante consultas SQL directas utilizando la librería `mysql-connector-python`, sin el uso de ORMs, según los requisitos de la prueba.
 * **Servidor HTTP:** Se utilizará el módulo `http.server` de la biblioteca estándar de Python para construir el servidor API, cumpliendo con la restricción de no usar frameworks externos.
-* **Pruebas Unitarias:** Se empleará el módulo `unittest` de la biblioteca estándar de Python. Se buscará seguir principios de TDD (Test-Driven Development) como punto extra[cite: 41].
+* **Pruebas Unitarias:** Se empleará el módulo `unittest` de la biblioteca estándar de Python. Se buscará seguir principios de TDD (Test-Driven Development) como punto extra.
 * **Control de Versiones:** Git.
-* **Guía de Estilos:** Se seguirá la guía de estilos PEP8 para Python para asegurar un código limpio y legible[cite: 8].
+* **Guía de Estilos:** Se seguirá la guía de estilos PEP8 para Python para asegurar un código limpio y legible.
 * **Formato de Datos:** JSON para el intercambio de datos con el cliente (ej. filtros de entrada, respuestas de la API).
 
 ## Estructura del Proyecto
@@ -37,6 +37,7 @@ habi-ms-property-api/
 ├── server.py                  # Punto de entrada para iniciar el servidor HTTP
 ├── README.md                  # Este archivo: documentación del proyecto
 ├── requirements.txt           # Dependencias de Python del proyecto
+├── .env                       # Variables de entorno
 └── .gitignore                 # Archivos y directorios ignorados por Git
 ```
 
@@ -49,24 +50,78 @@ Esta estructura, aunque no utiliza un framework, se inspira en principios de dis
 * `app/models.py`: Define cómo se estructuran los datos dentro de la aplicación.
 * `app/db_config.py`: Externaliza la configuración de la base de datos.
 
-Esta separación busca facilitar la mantenibilidad, la legibilidad y la capacidad de realizar pruebas unitarias de forma aislada. [cite: 7]
+Esta separación busca facilitar la mantenibilidad, la legibilidad y la capacidad de realizar pruebas unitarias de forma aislada. 
 
 ## Abordaje del Desarrollo (Servicio de Consulta)
 
-El servicio de consulta de inmuebles se desarrollará como una API REST [cite: 9] y cumplirá con los siguientes requisitos funcionales:
+El servicio de consulta de inmuebles se desarrollará como una API REST y cumplirá con los siguientes requisitos funcionales:
 
-1.  **Consulta de Inmuebles por Estado:** Permitirá consultar inmuebles con estados "pre_venta", "en_venta" y "vendido"[cite: 10]. El estado actual de un inmueble se determinará por el último registro en la tabla `status_history` para dicho inmueble[cite: 22].
+1.  **Consulta de Inmuebles por Estado:** Permitirá consultar inmuebles con estados "pre_venta", "en_venta" y "vendido". El estado actual de un inmueble se determinará por el último registro en la tabla `status_history` para dicho inmueble.
 2.  **Filtros:** Los usuarios podrán filtrar los inmuebles por:
-    * Año de construcción [cite: 11]
-    * Ciudad [cite: 11]
-    * Estado (del inmueble, ej: "en_venta") [cite: 11]
-    Se permitirá la aplicación de múltiples filtros en una misma consulta[cite: 12].
-3.  **Información a Devolver:** La API retornará la siguiente información para cada inmueble: Dirección, Ciudad, Estado (entidad federativa), Precio de venta y Descripción[cite: 13].
-4.  **JSON de Entrada para Filtros:** Se definirá y documentará un archivo JSON ejemplo que represente la estructura esperada para los filtros enviados por el cliente[cite: 21].
-5.  **Calidad del Código:** Se priorizará un código fácil de mantener, leer y que sea autodocumentado[cite: 7].
-6.  **Pruebas Unitarias:** Se desarrollarán pruebas unitarias para validar la funcionalidad del código[cite: 30].
+    * Año de construcción
+    * Ciudad
+    * Estado (del inmueble, ej: "en_venta")
+    Se permitirá la aplicación de múltiples filtros en una misma consulta.
+3.  **Información a Devolver:** La API retornará la siguiente información para cada inmueble: Dirección, Ciudad, Estado (entidad federativa), Precio de venta y Descripción.
+4.  **JSON de Entrada para Filtros:** Se definirá y documentará un archivo JSON ejemplo que represente la estructura esperada para los filtros enviados por el cliente.
+5.  **Calidad del Código:** Se priorizará un código fácil de mantener, leer y que sea autodocumentado.
+6.  **Pruebas Unitarias:** Se desarrollarán pruebas unitarias para validar la funcionalidad del código.
 
-No se realizarán modificaciones a los registros existentes en la base de datos, pero se podrán agregar nuevos registros si es necesario para las pruebas[cite: 23]. Se prestará atención al manejo de posibles inconsistencias en los datos y excepciones[cite: 24].
+No se realizarán modificaciones a los registros existentes en la base de datos, pero se podrán agregar nuevos registros si es necesario para las pruebas. Se prestará atención al manejo de posibles inconsistencias en los datos y excepciones.
+
+## API: Consulta de Inmuebles
+
+### Endpoint de Consulta
+
+`GET /properties`
+
+Este endpoint permite consultar la lista de inmuebles. Retorna una lista de inmuebles que pueden ser filtrados según los parámetros especificados.
+
+### Aplicación de Filtros
+
+Los filtros se aplican como parámetros de consulta (query parameters) en la URL del endpoint `/properties`. Se pueden combinar múltiples filtros en una misma solicitud. Si no se proporciona ningún filtro, se devolverán todos los inmuebles que cumplan con los estados permitidos ("pre_venta", "en_venta", "vendido")[cite: 10].
+
+**Ejemplo de URL con filtros:**
+
+`/properties?city=Bogotá%20D.C.&year=2022&status=en_venta`
+
+### Parámetros de Filtro Soportados
+
+A continuación, se detallan los parámetros de filtro que se pueden utilizar:
+
+1.  **`year`** (Año de construcción)
+    * **Descripción:** Filtra los inmuebles por su año de construcción. [cite: 11]
+    * **Tipo de dato:** Entero (Integer)
+    * **Ejemplo:** `year=2021`
+
+2.  **`city`** (Ciudad)
+    * **Descripción:** Filtra los inmuebles por la ciudad donde están ubicados. [cite: 11]
+    * **Tipo de dato:** Cadena de texto (String)
+    * **Ejemplo:** `city=Medellín` (El valor debe ser codificado para URL si contiene espacios, ej. `Bogotá%20D.C.`)
+
+3.  **`status`** (Estado del inmueble)
+    * **Descripción:** Filtra los inmuebles por su estado actual. [cite: 11] Solo se considerarán los inmuebles cuyo último estado registrado coincida con uno de los valores permitidos. [cite: 10, 22]
+    * **Tipo de dato:** Cadena de texto (String)
+    * **Valores permitidos:**
+        * `"pre_venta"`
+        * `"en_venta"`
+        * `"vendido"`
+    * **Ejemplo:** `status=pre_venta`
+
+### Estructura de Datos para Filtros (Ejemplo de Referencia)
+
+Para una representación clara de la estructura de datos que el frontend podría manejar para construir estos filtros, se ha creado un archivo JSON de ejemplo. Este archivo ilustra los campos y los tipos de datos esperados para los filtros.
+
+* **Ubicación del archivo de ejemplo:** `examples/filter_input_example.json` [cite: 21]
+* **Contenido de ejemplo (`examples/filter_input_example.json`):**
+    ```json
+    {
+      "year": 2021,
+      "city": "Cartagena",
+      "status": "pre_venta"
+    }
+    ```
+    Este JSON es una referencia para entender los datos de los filtros; la API los consumirá como parámetros de consulta en la URL como se describió anteriormente.
 
 ## Dudas y Decisiones de Diseño
 
