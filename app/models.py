@@ -35,7 +35,7 @@ class StatusHistory:
 
 # --- Modelo para la Salida de la API ---
 @dataclass
-class PropertyAPIResponse:
+class PropertyAPIResponseDTO:
     """
     Representa la estructura de datos de un inmueble tal como se devuelve en la API.
     """

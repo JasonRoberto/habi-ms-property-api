@@ -1,5 +1,5 @@
 from .database_manager import DatabaseManager
-from .models import PropertyAPIResponse
+from .models import PropertyAPIResponseDTO
 from typing import List, Dict, Optional
 
 class PropertyService:
@@ -15,7 +15,7 @@ class PropertyService:
         """
         self.db_manager = DatabaseManager()
         
-    def get_properties(self, filters: Optional[Dict[str, any]] = None) -> List[PropertyAPIResponse]:
+    def get_properties(self, filters: Optional[Dict[str, any]] = None) -> List[PropertyAPIResponseDTO]:
         """
         Obtiene una lista de inmuebles aplicando los filtros especificados.
 
@@ -25,7 +25,7 @@ class PropertyService:
                 Defaults to None (sin filtros adicionales más allá de los estados permitidos).
 
         Returns:
-            List[PropertyAPIResponse]: Una lista de instancias de PropertyAPIResponse.
+            List[PropertyAPIResponseDTO]: Una lista de instancias de PropertyAPIResponseDTO.
             Retorna una lista vacía si no hay resultados o si ocurre un error.
         """
         if filters is None:
@@ -104,7 +104,7 @@ class PropertyService:
         formatted_properties = []
         for prop_row in properties_from_db:
             try:
-                api_response_item = PropertyAPIResponse(
+                api_response_item = PropertyAPIResponseDTO(
                     direccion=prop_row["address"],
                     ciudad=prop_row["city"],
                     estado=prop_row["current_status"], # 'current_status' alias de s.name
@@ -113,6 +113,6 @@ class PropertyService:
                 )
                 formatted_properties.append(api_response_item)
             except KeyError as e:
-                print(f"PropertyService: Falta la clave {e} en la fila de la BD al crear PropertyAPIResponse. Fila: {prop_row}")
+                print(f"PropertyService: Falta la clave {e} en la fila de la BD al crear PropertyAPIResponseDTO. Fila: {prop_row}")
         
         return formatted_properties
