@@ -79,7 +79,7 @@ Este endpoint permite consultar la lista de inmuebles. Retorna una lista de inmu
 
 ### Aplicación de Filtros
 
-Los filtros se aplican como parámetros de consulta (query parameters) en la URL del endpoint `/properties`. Se pueden combinar múltiples filtros en una misma solicitud. Si no se proporciona ningún filtro, se devolverán todos los inmuebles que cumplan con los estados permitidos ("pre_venta", "en_venta", "vendido")[cite: 10].
+Los filtros se aplican como parámetros de consulta (query parameters) en la URL del endpoint `/properties`. Se pueden combinar múltiples filtros en una misma solicitud. Si no se proporciona ningún filtro, se devolverán todos los inmuebles que cumplan con los estados permitidos ("pre_venta", "en_venta", "vendido").
 
 **Ejemplo de URL con filtros:**
 
@@ -90,17 +90,17 @@ Los filtros se aplican como parámetros de consulta (query parameters) en la URL
 A continuación, se detallan los parámetros de filtro que se pueden utilizar:
 
 1.  **`year`** (Año de construcción)
-    * **Descripción:** Filtra los inmuebles por su año de construcción. [cite: 11]
+    * **Descripción:** Filtra los inmuebles por su año de construcción.
     * **Tipo de dato:** Entero (Integer)
     * **Ejemplo:** `year=2021`
 
 2.  **`city`** (Ciudad)
-    * **Descripción:** Filtra los inmuebles por la ciudad donde están ubicados. [cite: 11]
+    * **Descripción:** Filtra los inmuebles por la ciudad donde están ubicados.
     * **Tipo de dato:** Cadena de texto (String)
     * **Ejemplo:** `city=Medellín` (El valor debe ser codificado para URL si contiene espacios, ej. `Bogotá%20D.C.`)
 
 3.  **`status`** (Estado del inmueble)
-    * **Descripción:** Filtra los inmuebles por su estado actual. [cite: 11] Solo se considerarán los inmuebles cuyo último estado registrado coincida con uno de los valores permitidos. [cite: 10, 22]
+    * **Descripción:** Filtra los inmuebles por su estado actual. Solo se considerarán los inmuebles cuyo último estado registrado coincida con uno de los valores permitidos.
     * **Tipo de dato:** Cadena de texto (String)
     * **Valores permitidos:**
         * `"pre_venta"`
@@ -112,7 +112,7 @@ A continuación, se detallan los parámetros de filtro que se pueden utilizar:
 
 Para una representación clara de la estructura de datos que el frontend podría manejar para construir estos filtros, se ha creado un archivo JSON de ejemplo. Este archivo ilustra los campos y los tipos de datos esperados para los filtros.
 
-* **Ubicación del archivo de ejemplo:** `examples/filter_input_example.json` [cite: 21]
+* **Ubicación del archivo de ejemplo:** `examples/filter_input_example.json`
 * **Contenido de ejemplo (`examples/filter_input_example.json`):**
     ```json
     {
@@ -146,3 +146,84 @@ A continuación, se plantean algunas dudas iniciales y las decisiones tomadas pa
         * **Análisis de URL:** Se utilizará el atributo `self.path` de la instancia del manejador y el módulo `urllib.parse` (parte de la biblioteca estándar) para analizar la ruta del endpoint y los parámetros de consulta (query string).
         * **Despacho de Solicitudes:** Se implementará una lógica de despacho simple (ej. una serie de `if/elif/else` o un diccionario de mapeo) que asocie las rutas y métodos HTTP (principalmente GET para este servicio) a las funciones correspondientes en `property_service.py`.
         * **Simplicidad y Estándar:** Este método es directo y utiliza herramientas estándar de Python. Para el alcance de esta prueba, con un número limitado de endpoints, es una solución eficiente y clara. Demuestra la comprensión de los fundamentos del protocolo HTTP y el manejo de solicitudes sin abstracciones de frameworks. Para una API con muchos endpoints, un framework con un sistema de enrutamiento más sofisticado sería preferible, pero aquí se cumple el requisito.
+
+## Diseño Conceptual del Servicio "Me Gusta" (Requerimiento 2)
+
+Este segundo requerimiento es de naturaleza conceptual y busca extender el modelo de datos existente para soportar una funcionalidad de "Me Gusta" para los inmuebles. No se espera la implementación del microservicio, solo el diseño del modelo de datos, el SQL para crearlo y la justificación.
+
+### Requisitos de la Funcionalidad "Me Gusta"
+
+* Los usuarios registrados pueden marcar un inmueble con "Me Gusta".
+* Este "Me Gusta" debe persistir en la base de datos.
+* Se debe mantener un histórico de los "Me Gusta": qué usuario dio "Me Gusta" a qué inmueble y cuándo.
+* Este sistema permitirá un ranking interno de los inmuebles más populares.
+
+### Modelo de Datos Propuesto
+
+Para implementar esta funcionalidad, se utilizará la tabla de usuarios existente en la base de datos, `auth_user`, y se propone la creación de una nueva tabla: `property_like`.
+
+#### 1. Tabla `auth_user` (Existente)
+
+* **Observación:** Se ha identificado que la base de datos ya cuenta con una tabla `auth_user`. Esta tabla será la utilizada para la gestión e identificación de los usuarios registrados.
+* **Propósito:** Almacena la información de los usuarios. Es fundamental para asociar los "Me Gusta" a un usuario específico.
+* **Campos Clave Relevantes para esta funcionalidad:**
+    * `id` (INT, PK, AI): Identificador único del usuario. Será la clave foránea en la tabla `property_like`.
+    * `username` (VARCHAR, UNIQUE): Nombre de usuario.
+    * `email` (VARCHAR): Email del usuario.
+    * (La tabla `auth_user` también contiene otros campos como `first_name`, `last_name`, `is_active`, `date_joined`, etc., que pueden ser útiles para la gestión completa de usuarios pero no son directamente referenciados por la tabla `property_like` más allá del `id`).
+
+
+#### 2. Nueva Tabla `property_like`
+
+* **Propósito:** Esta tabla registra la acción de un usuario dando "Me Gusta" a un inmueble. Actúa como una tabla de cruce (junction table) para la relación muchos-a-muchos entre usuarios e inmuebles.
+* **Campos Clave:**
+    * `id` (INT, PK, AI): Identificador único del registro de "Me Gusta".
+    * `user_id` (INT, FK): Referencia al `id` del usuario de la tabla `auth_user` que dio "Me Gusta".
+    * `property_id` (INT, FK): Referencia al `id` del inmueble que recibió el "Me Gusta".
+    * `created_at` (DATETIME): Timestamp que registra el momento exacto en que se dio el "Me Gusta". Este campo es crucial para el requisito de "histórico".
+* **Consideraciones de Diseño:**
+    * **Unicidad:** Se añade una restricción `UNIQUE` en el par `(user_id, property_id)`. Esto asegura que un usuario solo pueda tener un "Me Gusta" activo para un inmueble específico simultáneamente. Si un usuario "quita el Me Gusta" (lo que probablemente implicaría borrar el registro de `property_like`) y luego vuelve a marcar "Me Gusta", se crearía un nuevo registro con un nuevo `created_at`.
+    * **Histórico:** El "histórico de 'me gusta' de cada usuario y a cuáles inmuebles" se puede consultar seleccionando todos los registros de `property_like` para un `user_id` específico. La fecha `created_at` indica cuándo se estableció cada "Me Gusta".
+    * **Ranking:** El ranking de inmuebles se puede obtener contando el número de registros en `property_like` agrupados por `property_id`.
+    * **Relaciones (Constraints FK):** Se definen llaves foráneas hacia `auth_user.id` y `property.id` con la opción `ON DELETE CASCADE`. Esto significa que si un usuario o un inmueble es eliminado del sistema, sus "Me Gusta" asociados también se eliminarán automáticamente, manteniendo la integridad de los datos.
+
+### Diagrama ERD Simplificado
+
+Se muestra la relación entre la tabla existente `auth_user`, la tabla existente `property` y la nueva tabla `property_like`:
+
+![Diagrama ERD](./docs/img/ERD_habi_likes.png)
+
+
+
+### Código SQL (Solo para la Nueva Tabla `property_like`)
+
+Dado que la tabla `auth_user` ya existe, solo se proporciona el SQL para crear la nueva tabla `property_like`, asegurándose de que la clave foránea `user_id` referencie correctamente a `auth_user.id`.
+
+```sql
+-- -----------------------------------------------------
+-- Table `habi_db`.`property_like`
+-- (Asegurándose que la tabla `auth_user` y `property` ya existen)
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `habi_db`.`property_like` (
+  `id` INT NOT NULL AUTO_INCREMENT,
+  `user_id` INT NOT NULL COMMENT 'ID del usuario (de la tabla auth_user) que dio "Me Gusta".',
+  `property_id` INT NOT NULL COMMENT 'ID del inmueble que recibió el "Me Gusta".',
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Fecha y hora en que se registró el "Me Gusta".',
+  PRIMARY KEY (`id`),
+  INDEX `fk_property_like_auth_user_idx` (`user_id` ASC) VISIBLE,
+  INDEX `fk_property_like_property_idx` (`property_id` ASC) VISIBLE,
+  -- Restricción para asegurar que un usuario solo pueda tener un "Me Gusta" activo por inmueble.
+  UNIQUE INDEX `uk_auth_user_property_like` (`user_id` ASC, `property_id` ASC) VISIBLE,
+  CONSTRAINT `fk_property_like_auth_user`
+    FOREIGN KEY (`user_id`)
+    REFERENCES `habi_db`.`auth_user` (`id`)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE,
+  CONSTRAINT `fk_property_like_property`
+    FOREIGN KEY (`property_id`)
+    REFERENCES `habi_db`.`property` (`id`)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE)
+ENGINE = InnoDB
+DEFAULT CHARACTER SET = latin1
+COMMENT = 'Registra los "Me Gusta" que los usuarios (de auth_user) dan a los inmuebles.';
