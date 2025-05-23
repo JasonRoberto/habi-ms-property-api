@@ -4,7 +4,6 @@ from urllib.parse import urlparse, parse_qs
 import dataclasses
 
 from .property_service import PropertyService
-# from .models import Property # Si decides usar clases para los modelos de datos
 
 class APIRequestHandler(BaseHTTPRequestHandler):
 
@@ -86,14 +85,14 @@ class APIRequestHandler(BaseHTTPRequestHandler):
                 
 
             try:
-                print(f"Solicitud GET para /properties con filtros: {filters}")
+                # print(f"Solicitud GET para /properties con filtros: {filters}")
                 properties = self.property_service.get_properties(filters)
                 properties_as_dicts = [dataclasses.asdict(prop) for prop in properties]
 
                 self._send_json_response(200, properties_as_dicts)
                 
             except Exception as e:
-                print(f"Error interno procesando /properties: {e}")
+                # print(f"Error interno procesando /properties: {e}")
                 self._send_json_response(500, {"error": "Error interno del servidor"})
 
         elif path == "/health":
