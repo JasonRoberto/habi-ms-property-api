@@ -21,6 +21,6 @@ for key, value in DB_CONFIG.items():
 
 if missing_configs:
     raise ValueError(f"Error: Faltan las siguientes variables de entorno requeridas para la BD: {', '.join(missing_configs)}. "
-                     "Asegúrate de que el archivo .env existe en la raíz del proyecto y está configurado correctamente.")
+                    "Asegúrate de que el archivo .env existe en la raíz del proyecto y está configurado correctamente.")
 
 print("Configuración de base de datos cargada exitosamente.")
