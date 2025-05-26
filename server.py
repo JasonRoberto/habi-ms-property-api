@@ -1,9 +1,7 @@
 import http.server
 from app.request_handler import APIRequestHandler
+from config import HOST, PORT
 
-# Configuración del servidor
-HOST = "localhost"
-PORT = 8090
 
 def run_server(server_class=http.server.HTTPServer, handler_class=APIRequestHandler, host=HOST, port=PORT):
     """
@@ -28,6 +26,7 @@ def run_server(server_class=http.server.HTTPServer, handler_class=APIRequestHand
     finally:
         httpd.server_close()
         print("Servidor HTTP cerrado correctamente.")
+
 
 if __name__ == "__main__":
     run_server()
