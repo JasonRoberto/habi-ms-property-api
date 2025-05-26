@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from typing import Optional
 from datetime import datetime
 
+
 @dataclass
 class Property:
     """
@@ -14,6 +15,7 @@ class Property:
     description: Optional[str] = None
     year: Optional[int] = None
 
+
 @dataclass
 class Status:
     """
@@ -22,6 +24,7 @@ class Status:
     id: int
     name: str
     label: str
+
 
 @dataclass
 class StatusHistory:
@@ -34,6 +37,8 @@ class StatusHistory:
     update_date: datetime
 
 # --- Modelo para la Salida de la API ---
+
+
 @dataclass
 class PropertyAPIResponseDTO:
     """

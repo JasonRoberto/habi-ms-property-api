@@ -2,6 +2,7 @@ import mysql.connector
 from mysql.connector import errorcode
 from .db_config import DB_CONFIG
 
+
 class DatabaseManager:
     """
     Gestiona todas las interacciones con la base de datos MySQL.
@@ -15,7 +16,8 @@ class DatabaseManager:
         self.db_config = DB_CONFIG
         if not self.db_config:
             # Esto no debería ocurrir si db_config.py está bien y .env está cargado.
-            raise ValueError("La configuración de la base de datos (DB_CONFIG) no está definida.")
+            raise ValueError(
+                "La configuración de la base de datos (DB_CONFIG) no está definida.")
 
     def _execute_query(self, query: str, params: tuple = None, fetch_one: bool = False, is_dml: bool = False):
         """
@@ -44,13 +46,15 @@ class DatabaseManager:
             conn = mysql.connector.connect(**self.db_config)
             cursor = conn.cursor(dictionary=True)
 
-            print(f"Ejecutando SQL: {query} con Parámetros: {params}") # Para depuración
+            # Para depuración
+            print(f"Ejecutando SQL: {query} con Parámetros: {params}")
 
-            cursor.execute(query, params or ()) 
+            cursor.execute(query, params or ())
 
             if is_dml:
                 conn.commit()
-                print(f"Consulta DML ejecutada. Filas afectadas: {cursor.rowcount}")
+                print(
+                    f"Consulta DML ejecutada. Filas afectadas: {cursor.rowcount}")
                 return cursor.rowcount
             elif fetch_one:
                 return cursor.fetchone()
@@ -62,17 +66,20 @@ class DatabaseManager:
             print(f"Código de error MySQL: {err.errno}")
             print(f"Estado SQL: {err.sqlstate}")
             if err.errno == errorcode.ER_ACCESS_DENIED_ERROR:
-                print("Detalle: Nombre de usuario o contraseña de base de datos incorrectos.")
+                print(
+                    "Detalle: Nombre de usuario o contraseña de base de datos incorrectos.")
             elif err.errno == errorcode.ER_BAD_DB_ERROR:
-                print(f"Detalle: La base de datos '{self.db_config.get('database')}' no existe o no es accesible.")
-            
+                print(
+                    f"Detalle: La base de datos '{self.db_config.get('database')}' no existe o no es accesible.")
+
             if is_dml and conn:
                 print("Realizando rollback de la transacción DML debido a un error.")
                 conn.rollback()
             return None
-        
+
         except Exception as e:
-            print(f"Un error inesperado ocurrió durante la operación de base de datos: {e}")
+            print(
+                f"Un error inesperado ocurrió durante la operación de base de datos: {e}")
             if is_dml and conn:
                 conn.rollback()
             return None
