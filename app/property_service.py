@@ -1,6 +1,6 @@
 from .database_manager import DatabaseManager
 from .models import PropertyAPIResponseDTO
-from typing import List, Dict, Optional, Any
+from typing import List, Dict, Optional, Any, Tuple
 
 class PropertyService:
     """
@@ -38,7 +38,7 @@ class PropertyService:
 
         return self._format_properties(properties_from_db)
 
-    def _build_query_and_params(self, filters: Dict[str, Any]) -> (str, list):
+    def _build_query_and_params(self, filters: Dict[str, Any]) -> Tuple[str, List[Any]]:
         """
         Construye la consulta SQL y los parámetros según los filtros.
         """
@@ -65,8 +65,10 @@ class PropertyService:
                         status_history
                     GROUP BY
                         property_id
-                ) sh_inner ON sh_outer.property_id = sh_inner.property_id AND sh_outer.update_date = sh_inner.max_update_date
-            ) latest_status_history ON p.id = latest_status_history.property_id
+                ) sh_inner ON sh_outer.property_id = sh_inner.property_id
+                    AND sh_outer.update_date = sh_inner.max_update_date
+            ) latest_status_history
+                ON p.id = latest_status_history.property_id
             INNER JOIN
                 status s ON latest_status_history.status_id = s.id
         """
