@@ -2,6 +2,7 @@ from .database_manager import DatabaseManager
 from .models import PropertyAPIResponseDTO
 from typing import List, Dict, Optional, Any, Tuple
 
+
 class PropertyService:
     """
     Contiene la lógica de negocio para la consulta de inmuebles.
@@ -9,14 +10,20 @@ class PropertyService:
     y los formatea para ser enviados por APIRequestHandler.
     """
 
-    def __init__(self, db_manager: Optional[DatabaseManager] = None):
+    def __init__(
+        self,
+        db_manager: Optional[DatabaseManager] = None
+    ):
         """
         Inicializa el servicio con una instancia de DatabaseManager.
         Permite inyección de dependencias para facilitar pruebas y flexibilidad.
         """
         self.db_manager = db_manager or DatabaseManager()
-        
-    def get_properties(self, filters: Optional[Dict[str, Any]] = None) -> List[PropertyAPIResponseDTO]:
+
+    def get_properties(
+        self,
+        filters: Optional[Dict[str, Any]] = None
+    ) -> List[PropertyAPIResponseDTO]:
         """
         Obtiene una lista de inmuebles aplicando los filtros especificados.
 
@@ -38,7 +45,10 @@ class PropertyService:
 
         return self._format_properties(properties_from_db)
 
-    def _build_query_and_params(self, filters: Dict[str, Any]) -> Tuple[str, List[Any]]:
+    def _build_query_and_params(
+        self,
+        filters: Dict[str, Any]
+    ) -> Tuple[str, List[Any]]:
         """
         Construye la consulta SQL y los parámetros según los filtros.
         """
@@ -79,7 +89,7 @@ class PropertyService:
         if filters.get('year') is not None:
             where_clauses.append("p.year = %s")
             params.append(filters['year'])
-        
+
         if filters.get('city'):
             where_clauses.append("LOWER(p.city) LIKE LOWER(%s)")
             params.append(f"%{filters['city']}%")
@@ -93,7 +103,10 @@ class PropertyService:
 
         return base_query, params
 
-    def _format_properties(self, properties_from_db: List[Dict[str, Any]]) -> List[PropertyAPIResponseDTO]:
+    def _format_properties(
+        self,
+        properties_from_db: List[Dict[str, Any]]
+    ) -> List[PropertyAPIResponseDTO]:
         """
         Convierte los resultados de la base de datos en DTOs para la API.
         """
@@ -109,5 +122,6 @@ class PropertyService:
                 )
                 formatted_properties.append(api_response_item)
             except KeyError as e:
-                print(f"PropertyService: Falta la clave {e} en la fila de la BD al crear PropertyAPIResponseDTO. Fila: {prop_row}")
+                print(
+                    f"PropertyService: Falta la clave {e} en la fila de la BD al crear PropertyAPIResponseDTO. Fila: {prop_row}")
         return formatted_properties

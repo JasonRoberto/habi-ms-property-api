@@ -1,9 +1,10 @@
+import dataclasses
 import json
 from http.server import BaseHTTPRequestHandler
 from urllib.parse import urlparse, parse_qs
-import dataclasses
-
 from .property_service import PropertyService
+from config import BASE_URL
+
 
 class APIRequestHandler(BaseHTTPRequestHandler):
 
@@ -11,8 +12,12 @@ class APIRequestHandler(BaseHTTPRequestHandler):
         self.property_service = PropertyService()
         super().__init__(request, client_address, server)
 
-
-    def _send_json_response(self, status_code, data, content_type="application/json"):
+    def _send_json_response(
+        self,
+        status_code,
+        data,
+        content_type="application/json"
+    ):
         """
         Envía una respuesta HTTP en formato JSON.
 
@@ -44,11 +49,12 @@ class APIRequestHandler(BaseHTTPRequestHandler):
 
         # Procesar filtro 'year'
         if 'year' in parsed_query:
-            year_str = parsed_query['year'][0] # Toma el primer valor si se envían múltiples
+            year_str = parsed_query['year'][0]
             try:
                 filters['year'] = int(year_str)
             except ValueError:
-                errors.append(f"El valor para 'year' ('{year_str}') no es un entero válido.")
+                errors.append(
+                    f"El valor para 'year' ('{year_str}') no es un entero válido.")
 
         # Procesar filtro 'city'
         if 'city' in parsed_query:
@@ -62,9 +68,10 @@ class APIRequestHandler(BaseHTTPRequestHandler):
             if status_value in allowed_statuses:
                 filters['status'] = status_value
             else:
-                errors.append(f"El valor para 'status' ('{status_value}') no es válido. Valores permitidos: {', '.join(allowed_statuses)}.")
+                errors.append(
+                    f"El valor para 'status' ('{status_value}') no es válido. Valores permitidos: {', '.join(allowed_statuses)}.")
 
-        return filters, errors # Devolvemos filtros válidos y lista de errores
+        return filters, errors  # Devolvemos filtros válidos y lista de errores
 
     def do_GET(self):
         """
@@ -72,31 +79,34 @@ class APIRequestHandler(BaseHTTPRequestHandler):
         """
         parsed_url = urlparse(self.path)
         path = parsed_url.path
-        
+
         # --- Enrutamiento Básico ---
-        if path == "/properties":
-            
+        if path == f"{BASE_URL}/properties":
+
             filters, filter_errors = self._parse_filters(parsed_url.query)
 
             if filter_errors:
-                error_response = {"error": "Parámetros de filtro inválidos", "details": filter_errors}
+                error_response = {
+                    "error": "Parámetros de filtro inválidos", "details": filter_errors}
                 self._send_json_response(400, error_response)
                 return
-                
 
             try:
                 # print(f"Solicitud GET para /properties con filtros: {filters}")
                 properties = self.property_service.get_properties(filters)
-                properties_as_dicts = [dataclasses.asdict(prop) for prop in properties]
+                properties_as_dicts = [
+                    dataclasses.asdict(prop) for prop in properties]
 
                 self._send_json_response(200, properties_as_dicts)
-                
+
             except Exception as e:
                 # print(f"Error interno procesando /properties: {e}")
-                self._send_json_response(500, {"error": "Error interno del servidor"})
+                self._send_json_response(
+                    500, {"error": "Error interno del servidor"})
 
-        elif path == "/health":
-            self._send_json_response(200, {"status": "ok", "message": "Servidor funcionando correctamente"})
-        
+        elif path == f"{BASE_URL}/health":
+            self._send_json_response(
+                200, {"status": "ok", "message": "Servidor funcionando correctamente"})
+
         else:
             self._send_json_response(404, {"error": "Endpoint no encontrado"})
